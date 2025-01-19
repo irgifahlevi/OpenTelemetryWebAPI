@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Data;
 using Order.API.Model;
+using Order.API.Repository;
 
 namespace Order.API.Controllers
 {
@@ -14,95 +15,51 @@ namespace Order.API.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly OrderDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public OrdersController(OrderDbContext context)
+        public OrdersController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: api/Orders
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Orders>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrders()
         {
-            return await _context.Orders.ToListAsync();
+            // to do implement code
+            return Ok();
         }
 
         // GET: api/Orders/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Orders>> GetOrders(int id)
+        public async Task<ActionResult<OrderItem>> GetOrders(int id)
         {
-            var orders = await _context.Orders.FindAsync(id);
-
-            if (orders == null)
-            {
-                return NotFound();
-            }
-
-            return orders;
+            // to do implement code
+            return Ok();
         }
 
         // PUT: api/Orders/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrders(int id, Orders orders)
+        public async Task<IActionResult> PutOrders(int id, OrderItem orders)
         {
-            if (id != orders.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(orders).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrdersExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            // to do implement code
+            return Ok();
         }
 
         // POST: api/Orders
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Orders>> PostOrders(Orders orders)
+        public async Task<ActionResult<OrderItem>> PostOrders(OrderItem orders)
         {
-            _context.Orders.Add(orders);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetOrders", new { id = orders.Id }, orders);
+            // to do implement code
+            return Ok();
         }
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrders(int id)
         {
-            var orders = await _context.Orders.FindAsync(id);
-            if (orders == null)
-            {
-                return NotFound();
-            }
-
-            _context.Orders.Remove(orders);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool OrdersExists(int id)
-        {
-            return _context.Orders.Any(e => e.Id == id);
+            // to do implement code
+            return Ok();
         }
     }
 }

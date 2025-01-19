@@ -1,11 +1,11 @@
 ﻿using System.Text.Json;
 
-namespace Product.API.Extension
+namespace Order.API.Extension
 {
     public class ErrorHandlingMiddleware
     {
-        private readonly ILogger<ErrorHandlingMiddleware> _logger;
         private readonly RequestDelegate _next;
+        private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
         public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
         {

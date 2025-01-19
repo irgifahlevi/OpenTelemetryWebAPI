@@ -14,6 +14,6 @@ namespace Order.API.Data
         {
         }
 
-        public DbSet<Order.API.Model.Orders> Orders { get; set; } = default!;
+        public DbSet<OrderItem> Orders { get; set; }
     }
 }
