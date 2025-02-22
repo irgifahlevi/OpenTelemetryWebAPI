@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Order.API.DTO;
 using Order.API.Extension;
 using Order.API.Model;
 using Order.API.Repository;
@@ -24,12 +25,19 @@ namespace Order.API.Services
             return (orders, totalOrder);
         }
 
-        public async Task<OrderItem?> GetOrderItem(int productId)
+        public async Task<OrderItemViewModel?> GetOrderItem(int productId)
         {
-            return await _unitOfWork.OrderRepository.GetOrderByProductId(productId);
+            var data = await _unitOfWork.OrderRepository.GetOrderByProductId(productId);
+
+            if (data == null)
+            {
+                return null;
+            }
+
+            return new OrderItemViewModel { Id = data.Id, ProductId = data.ProductId, Quantity = data.Quantity, OrderDate = data.OrderDate };
         }
 
-        public async Task AddOrder(OrderItem order)
+        public async Task AddOrder(OrderRequest order)
         {
             try
             {
@@ -37,13 +45,18 @@ namespace Order.API.Services
                 if (existsOrder != null)
                 {
                     existsOrder.Quantity += order.Quantity;
-                    order.OrderDate = DateTime.UtcNow;
                     _unitOfWork.OrderRepository.Update(existsOrder);
                 }
                 else
                 {
-                    order.OrderDate = DateTime.UtcNow;
-                    await _unitOfWork.OrderRepository.AddAsync(order);
+                    OrderItem item = new OrderItem()
+                    { 
+                        ProductId = order.ProductId,
+                        Quantity = order.Quantity,
+                        OrderDate = DateTime.UtcNow
+                    };
+
+                    await _unitOfWork.OrderRepository.AddAsync(item);
                 }
 
                 await _unitOfWork.CommitAsync();

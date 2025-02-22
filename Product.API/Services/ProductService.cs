@@ -21,10 +21,12 @@ namespace Product.API.Services
 
         public async Task<(IEnumerable<Products>, int)> GetProductsWithPaginationAsync(int page, int pageSize)
         {
-            var query = await _unitOfWork.ProductRepository.GetAllProducts();
+            var query = _unitOfWork.ProductRepository.GetProducts();
             var totalCount = await query.CountAsync();
 
-            var products = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var products = await query.Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return (products, totalCount);
         }

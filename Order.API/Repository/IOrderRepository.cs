@@ -21,7 +21,7 @@ namespace Order.API.Repository
 
         public Task<IQueryable<OrderItem>> GetOrderItems()
         {
-            return Task.FromResult(_dbSet.AsQueryable());
+            return Task.FromResult(_dbSet.OrderBy(Q => Q.Id).AsQueryable());
         }
     }
 

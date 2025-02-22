@@ -9,6 +9,7 @@ namespace Product.API.Repository
         // implement the specific method product repository
         Task<IQueryable<Products>> GetAllProducts();
         Task<Products?> GetProductBySku(string sku);
+        IQueryable<Products> GetProducts();
     }
 
 
@@ -27,7 +28,12 @@ namespace Product.API.Repository
 
         public Task<IQueryable<Products>> GetAllProducts()
         {
-            return Task.FromResult(_dbSet.AsQueryable());
+            return Task.FromResult(_dbSet.OrderByDescending(Q => Q.Id).AsQueryable());
+        }
+
+        public IQueryable<Products> GetProducts()
+        {
+            return _dbSet.AsNoTracking().OrderByDescending(Q => Q.Id);
         }
     }
 }

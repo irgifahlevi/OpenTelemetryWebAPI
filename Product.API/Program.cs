@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Product.API.Data;
 using Product.API.Extension;
 using Product.API.Repository;
@@ -9,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connection = builder.Configuration.GetConnectionString("Default");
+
 if (connection == null) throw new InvalidOperationException("Connection string 'Order API' not found.");
 
 builder.Services.AddControllers();
@@ -23,6 +27,26 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ProductService>();
+
+var serviceVersion = builder.Configuration.GetSection("AppSettings")["ServiceVersion"];
+var serviceName = builder.Configuration.GetSection("AppSettings")["ServiceName"];
+var secretKey = builder.Configuration.GetSection("Honeycomb")["SecretKey"];
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName!, serviceVersion!))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddSqlClientInstrumentation()
+        .AddConsoleExporter()
+        .AddHoneycomb(o =>
+        {
+            o.ServiceName = serviceName;
+            o.ServiceVersion = serviceVersion;
+            o.ApiKey = secretKey;
+            o.Dataset = "Test";
+        })
+    );
 
 var app = builder.Build();
 

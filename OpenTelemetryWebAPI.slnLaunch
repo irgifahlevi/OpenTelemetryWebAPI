@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "All Api",
+    "Projects": [
+      {
+        "Path": "Product.API\\Product.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "Order.API\\Order.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      }
+    ]
+  }
+]
