@@ -1,17 +1,33 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using Product.API.Extension;
-using Product.API.Model;
 using Product.API.Repository;
+using SharedLibrary.Model;
+using System.Diagnostics;
 
 namespace Product.API.Services
 {
     public class ProductService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPublishEndpoint _publishEndpoint;
+        private readonly IConfiguration _configuration;
+        private static ActivitySource ActivitySource;
+        private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
-        public ProductService(IUnitOfWork unitOfWork)
+        public ProductService(IUnitOfWork unitOfWork, IPublishEndpoint publishEndpoint, IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
+            _publishEndpoint = publishEndpoint;
+            _configuration = configuration;
+
+
+            var serviceName = _configuration.GetValue<string>("AppSettings:ServiceName");
+            var serviceVersion = _configuration.GetValue<string>("AppSettings:ServiceVersion");
+
+            ActivitySource = new ActivitySource(serviceName!, serviceVersion!);
         }
 
         public async Task<IEnumerable<Products>> GetProductsAsync()
@@ -40,20 +56,46 @@ namespace Product.API.Services
         {
             try
             {
-                var checkData = await _unitOfWork.ProductRepository.GetProductBySku(product.SKU);
-                if (checkData != null) 
+                var existProduct = await _unitOfWork.ProductRepository.GetProductBySku(product.SKU);
+                if (existProduct != null) 
                 {
-                    checkData.Name = product.Name;
-                    checkData.Description = product.Description;
-                    checkData.Price = product.Price;
+                    existProduct.Name = product.Name;
+                    existProduct.Description = product.Description;
+                    existProduct.Price = product.Price;
 
-                    _unitOfWork.ProductRepository.Update(checkData);
+                    _unitOfWork.ProductRepository.Update(existProduct);
                 }
                 else
                 {
                     await _unitOfWork.ProductRepository.AddAsync(product);
                 }
-                
+
+                Products sourceData = existProduct != null ? existProduct : product;
+
+                // publish event to rabitmq
+                using var activity = ActivitySource.StartActivity("PublishProductEvent", ActivityKind.Producer);
+                if (activity != null)
+                {
+                    activity.SetTag("messaging.system", "rabbitmq");
+                    activity.SetTag("messaging.destination", "product-created");
+                    activity.SetTag("product.name", sourceData.Name);
+
+                    var headers = new Dictionary<string, object>();
+
+                    Propagator.Inject(new PropagationContext(activity.Context, Baggage.Current), headers, (headers, key, value) =>
+                    {
+                        headers[key] = value;
+                    });
+
+                    await _publishEndpoint.Publish(sourceData, ctx =>
+                    {
+                        foreach (var header in headers)
+                        {
+                            ctx.Headers.Set(header.Key, header.Value);
+                        }
+                    });
+                }
+
                 await _unitOfWork.CommitAsync();
             }
             catch (Exception ex)

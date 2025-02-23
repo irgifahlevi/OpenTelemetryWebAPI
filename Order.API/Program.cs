@@ -38,7 +38,6 @@ builder.Services.AddOpenTelemetry()
         {
             options.RecordException = true;
         })
-        .AddHttpClientInstrumentation()
         .AddSqlClientInstrumentation()
         .AddConsoleExporter()
         .AddHoneycomb(o =>

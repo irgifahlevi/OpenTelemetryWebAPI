@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Product.API.Extension;
-using Product.API.Model;
 using Product.API.Services;
+using SharedLibrary.Model;
 
 namespace Product.API.Controllers
 {

@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
@@ -31,14 +32,19 @@ builder.Services.AddScoped<ProductService>();
 var serviceVersion = builder.Configuration.GetSection("AppSettings")["ServiceVersion"];
 var serviceName = builder.Configuration.GetSection("AppSettings")["ServiceName"];
 var secretKey = builder.Configuration.GetSection("Honeycomb")["SecretKey"];
+var host = builder.Configuration.GetSection("RabbitMQ")["HostName"];
+var username = builder.Configuration.GetSection("RabbitMQ")["Username"];
+var password = builder.Configuration.GetSection("RabbitMQ")["Password"];
+
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName!, serviceVersion!))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
         .AddSqlClientInstrumentation()
+        .AddSource(serviceName!)
         .AddConsoleExporter()
+        .AddOtlpExporter()
         .AddHoneycomb(o =>
         {
             o.ServiceName = serviceName;
@@ -47,6 +53,18 @@ builder.Services.AddOpenTelemetry()
             o.Dataset = "Test";
         })
     );
+
+builder.Services.AddMassTransit(o =>
+{
+    o.UsingRabbitMq((context, config) =>
+    {
+        config.Host(host!, c =>
+        {
+            c.Username(username!);
+            c.Password(password!);
+        });
+    });
+});
 
 var app = builder.Build();
 
@@ -66,3 +84,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+

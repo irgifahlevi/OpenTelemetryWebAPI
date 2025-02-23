@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Product.API.Data;
-using Product.API.Model;
+using SharedLibrary.Model;
 
 namespace Product.API.Repository
 {

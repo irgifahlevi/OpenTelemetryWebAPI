@@ -1,4 +1,4 @@
-﻿namespace Product.API.Model
+﻿namespace SharedLibrary.Model
 {
     public class Products
     {
@@ -7,6 +7,5 @@
         public string SKU { get; set; }
         public string? Description { get; set; }
         public double Price { get; set; }
-
     }
 }
