@@ -24,7 +24,6 @@ namespace Product.API.Controllers
         [EndpointSummary("Get all data products")]
         public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             var (products, totalCount) = await _service.GetProductsWithPaginationAsync(page, pageSize);
 
@@ -36,9 +35,7 @@ namespace Product.API.Controllers
                 TotalCount = totalCount
             };
 
-            stopwatch.Stop();
-
-            var response = ApiResponseHelper.Success(products, "Products retrieved successfully", stopwatch.Elapsed.TotalMilliseconds, pagination);
+            var response = ApiResponseHelper.Success(products, "Products retrieved successfully", pagination);
             return Ok(response);
         }
 
@@ -56,7 +53,7 @@ namespace Product.API.Controllers
             }
             stopwatch.Stop();
 
-            var response = ApiResponseHelper.Success(product, "Products retrieved successfully", stopwatch.Elapsed.TotalMilliseconds);
+            var response = ApiResponseHelper.Success(product, "Products retrieved successfully");
             return Ok(response);
         }
 
@@ -86,17 +83,13 @@ namespace Product.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Products>> PostProduct(Products product)
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
             await _service.AddProductAsync(product);
-
-            stopwatch.Stop();
 
             // Return CreatedAtAction response
             return CreatedAtAction(
                 "GetProductId",           // Name of the action to get the created resource (e.g., GetProductId)
                 new { id = product.Id },  // Route parameters for the GetProductId action (in this case, the product Id)
-                ApiResponseHelper.Success(product, "Product created successfully", stopwatch.Elapsed.TotalMilliseconds)  // Return custom response
+                ApiResponseHelper.Success(product, "Product created successfully")  // Return custom response
             );
         }
 

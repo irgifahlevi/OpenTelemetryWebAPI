@@ -10,13 +10,12 @@
 
     public sealed class ApiResponse<T>
     {
-        public ApiResponse(int statusCode, string message, T data, double executionTime = 0, Pagination? pagination = null)
+        public ApiResponse(int statusCode, string message, T data, Pagination? pagination = null)
         {
             this.StatusCode = statusCode;
             this.Message = message;
             this.Data = data;
             this.TimeStamp = DateTime.UtcNow;
-            this.ExcecutionTime = executionTime;
             this.Pagination = pagination;
         }
 
@@ -24,21 +23,20 @@
         public string Message { get; set; }
         public T? Data { get; set; }
         public DateTime TimeStamp { get; set; }
-        public double ExcecutionTime { get; set; }
         public Pagination? Pagination { get; set; }
     }
 
 
     public static class ApiResponseHelper
     {
-        public static ApiResponse<T> Success<T>(T data, string message = "Success", double executionTime = 0, Pagination pagination = null)
+        public static ApiResponse<T> Success<T>(T data, string message = "Success", Pagination pagination = null)
         {
-            return new ApiResponse<T>(200, message, data, executionTime, pagination);
+            return new ApiResponse<T>(200, message, data, pagination);
         }
 
-        public static ApiResponse<T> Error<T>(string message, int statusCode = 500, double executionTime = 0)
+        public static ApiResponse<T> Error<T>(string message, int statusCode = 500)
         {
-            return new ApiResponse<T>(statusCode, message, default, executionTime);
+            return new ApiResponse<T>(statusCode, message, default);
         }
     }
 }
