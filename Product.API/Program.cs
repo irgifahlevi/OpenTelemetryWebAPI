@@ -21,6 +21,9 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// caching in memory
+builder.Services.AddMemoryCache();
+
 // register connection database
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(connection));

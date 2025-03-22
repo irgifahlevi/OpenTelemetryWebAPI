@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using Product.API.Extension;
@@ -14,16 +15,16 @@ namespace Product.API.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
         private static ActivitySource ActivitySource;
         private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
-        public ProductService(IUnitOfWork unitOfWork, IPublishEndpoint publishEndpoint, IConfiguration configuration)
+        public ProductService(IUnitOfWork unitOfWork, IPublishEndpoint publishEndpoint, IConfiguration configuration, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _publishEndpoint = publishEndpoint;
             _configuration = configuration;
-
-
+            _cache = cache;
             var serviceName = _configuration.GetValue<string>("AppSettings:ServiceName");
             var serviceVersion = _configuration.GetValue<string>("AppSettings:ServiceVersion");
 
@@ -37,14 +38,29 @@ namespace Product.API.Services
 
         public async Task<(IEnumerable<Products>, int)> GetProductsWithPaginationAsync(int page, int pageSize)
         {
-            var query = _unitOfWork.ProductRepository.GetProducts();
-            var totalCount = await query.CountAsync();
+            string cacheKey = $"products_page_{page}_size_{pageSize}";
 
-            var products = await query.Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            if (!_cache.TryGetValue(cacheKey, out (IEnumerable<Products>, int) cachedData))
+            {
+                var query = _unitOfWork.ProductRepository.GetProducts();
+                var totalCount = await query.CountAsync();
 
-            return (products, totalCount);
+                var products = await query.Skip((page - 1) * pageSize)
+                                          .Take(pageSize)
+                                          .ToListAsync();
+
+                cachedData = (products, totalCount);
+
+                var cacheOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+                    SlidingExpiration = TimeSpan.FromMinutes(5)
+                };
+
+                _cache.Set(cacheKey, cachedData, cacheOptions);
+            }
+
+            return cachedData;
         }
 
         public async Task<Products> GetProductIdAsync(int id)

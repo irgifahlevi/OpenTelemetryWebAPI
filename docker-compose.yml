@@ -1,13 +1,41 @@
-﻿services:
+﻿version: '3.8'
+
+services:
   rabbitmq:
-        image: rabbitmq:3.8-management-alpine
-        container_name: rabbitmq
-        ports:
-          - "5672:5672"
-          - "15672:15672"
-        environment:
-         RABBITMQ_DEFAULT_USER: guest
-         RABBITMQ_DEFAULT_PASSWORD: guest
+    image: rabbitmq:3.8-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASSWORD: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq 
+
+
+  redis:
+    image: redis:alpine
+    container_name: redis_product
+    restart: always
+    ports:
+      - "6379:6379"     
+    volumes:
+      - redis_data:/data 
+    command: ["redis-server", "--appendonly", "yes"]
+
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis_product:6379
+    ports:
+      - "8081:8081"
+
 volumes:
   rabbitmq_data:
+    driver: local
+  redis_data:
     driver: local
